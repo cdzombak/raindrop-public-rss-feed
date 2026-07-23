@@ -1,0 +1,30 @@
+# Binaries and build output
+/raindrop-public-rss-feed
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/dist/
+
+# Test binaries and coverage
+*.test
+*.out
+coverage.*
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Editor / OS cruft
+.DS_Store
+
+# JetBrains IDEs (GoLand)
+/.idea/*
+
+# Local OAuth state (contains secrets); never commit
+.oauth.json
+*state*.json
+
+# tmp folder for testing output
+/tmp/*
