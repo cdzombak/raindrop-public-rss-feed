@@ -14,6 +14,8 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+
+	exitcode "github.com/cdzombak/exitcode_go"
 )
 
 const (
@@ -56,14 +58,14 @@ func main() {
 	if err := validateConfig(cfg); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		flag.Usage()
-		os.Exit(2)
+		os.Exit(exitcode.InvalidArgument)
 	}
 
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelWarn}))
 
 	if err := run(cfg, logger); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
+		os.Exit(exitcode.Failure)
 	}
 }
 
