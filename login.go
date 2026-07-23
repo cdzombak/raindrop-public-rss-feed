@@ -18,6 +18,25 @@ import (
 // loginTimeout bounds how long we wait for the user to complete authorization.
 const loginTimeout = 5 * time.Minute
 
+// dockerEnvVar is set in the Docker image (see Dockerfile). When present, the
+// OAuth callback server binds to all interfaces instead of the redirect URI's
+// host, so a published container port (docker run -p) can reach it.
+const dockerEnvVar = "RAINDROP_PUBLIC_RSS_FEED_IN_DOCKER"
+
+// callbackListenAddr is the address the OAuth callback server binds to. Normally
+// this is the redirect URI's host (e.g. localhost:8080). Inside Docker, where
+// the browser reaches the container through a published port, it binds all
+// interfaces on the same port so that forwarding works.
+func callbackListenAddr(redirect *url.URL) string {
+	if os.Getenv(dockerEnvVar) == "" {
+		return redirect.Host
+	}
+	if port := redirect.Port(); port != "" {
+		return "0.0.0.0:" + port
+	}
+	return redirect.Host
+}
+
 // runLogin performs the interactive OAuth flow: it stands up a local HTTP server
 // for the redirect callback, directs the user to Raindrop's authorize page,
 // exchanges the returned code for tokens, and persists everything to statePath.
@@ -67,9 +86,10 @@ func runLogin(cfg appConfig, logger *slog.Logger) error {
 	})
 
 	// Bind before printing the URL so we fail fast if the port is unavailable.
-	ln, err := net.Listen("tcp", redirect.Host)
+	listenAddr := callbackListenAddr(redirect)
+	ln, err := net.Listen("tcp", listenAddr)
 	if err != nil {
-		return fmt.Errorf("cannot listen on %q for the OAuth callback: %w", redirect.Host, err)
+		return fmt.Errorf("cannot listen on %q for the OAuth callback: %w", listenAddr, err)
 	}
 	srv := &http.Server{Handler: mux}
 	go func() {

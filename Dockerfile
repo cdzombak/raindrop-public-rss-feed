@@ -15,6 +15,12 @@ FROM scratch
 ARG BIN_NAME
 COPY --from=builder /src/out/${BIN_NAME} /usr/bin/${BIN_NAME}
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+# Signals to the program that it is running in this image, so the -login OAuth
+# callback server binds to all interfaces (0.0.0.0) and a published port
+# (docker run -p 8080:8080) can reach it.
+ENV RAINDROP_PUBLIC_RSS_FEED_IN_DOCKER=1
+
 ENTRYPOINT ["/usr/bin/raindrop-public-rss-feed"]
 
 LABEL license="GPL-3.0"

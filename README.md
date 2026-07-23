@@ -74,21 +74,21 @@ docker run --rm \
 
 You can also run the one-time `-login` in the container. It prints the
 authorization URL for you to open on your host, so no in-container browser is
-needed — but your browser's redirect must reach the callback server, which binds
-to the `-redirect-uri` host (`localhost:8080` by default). On Linux, use
-`--network host`:
+needed. The image binds the OAuth callback server to all interfaces, so just
+publish the callback port with `-p` (matching your `-redirect-uri`, default port
+8080):
 
 ```shell
-docker run --rm -it --network host \
+docker run --rm -it \
+  -p 8080:8080 \
   -e RAINDROP_CLIENT_ID -e RAINDROP_CLIENT_SECRET \
   -v /home/cdzombak/.config/raindrop-public-rss-feed:/state \
   cdzombak/raindrop-public-rss-feed:1 \
   -oauth-state /state/oauth.json -login
 ```
 
-Plain `-p 8080:8080` won't reach the container's loopback, so it won't work with
-the default redirect URI. Without host networking, authenticate on the host and
-mount the resulting state file.
+Open the printed URL on the host; the redirect to `http://localhost:8080/oauth`
+is forwarded into the container. (On Linux you can instead use `--network host`.)
 
 ## Setup
 
