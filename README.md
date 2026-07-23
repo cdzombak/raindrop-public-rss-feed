@@ -1,42 +1,104 @@
 # raindrop-public-rss-feed
 
-A small Go program that finds the most recently created [Raindrop.io](https://raindrop.io)
-bookmarks tagged `_public`, across your entire account, and writes them out as an
-RSS, Atom, or JSON feed.
+A small Go program that finds your most recently created [Raindrop.io](https://raindrop.io)
+bookmarks tagged `_public` and writes them out as an RSS, Atom, or JSON feed.
 
-Each feed item uses the bookmark's title, URL (as both the link and the GUID),
-description (as the item content), and cover image, if any (as an RSS/Atom
-enclosure and JSON Feed item image). The feed is written atomically to
-`-out-file`, so a web server never serves a half-written feed.
+Each item carries the bookmark's title, URL, description, and cover image (if
+any). The feed is written atomically, so a web server never serves a
+half-written file.
 
-It authenticates via OAuth using
-[cdzombak/raindrop-io-api-client](https://github.com/cdzombak/raindrop-io-api-client),
-and builds the feed with
-[cdzombak/gofeed](https://github.com/cdzombak/gofeed).
-You authenticate **once** interactively; after that the refresh token is stored
-and the program renews access tokens on its own, so it can run non-interactively
-(e.g. from cron).
+You authenticate via OAuth **once**, interactively. After that the refresh token
+is stored and the program renews access tokens on its own, so it can run
+non-interactively (e.g. from cron).
+
+## Installation
+
+### macOS via Homebrew
+
+```shell
+brew install cdzombak/oss/raindrop-public-rss-feed
+```
+
+### Debian via Apt repository
+
+Install my Debian repository if you haven't already:
+
+```shell
+sudo apt-get install ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://dist.cdzombak.net/deb.key | sudo gpg --dearmor -o /etc/apt/keyrings/dist-cdzombak-net.gpg
+sudo chmod 0644 /etc/apt/keyrings/dist-cdzombak-net.gpg
+echo -e "deb [signed-by=/etc/apt/keyrings/dist-cdzombak-net.gpg] https://dist.cdzombak.net/deb/oss any oss\n" | sudo tee -a /etc/apt/sources.list.d/dist-cdzombak-net.list > /dev/null
+sudo apt update
+```
+
+Then install `raindrop-public-rss-feed` via `apt`:
+
+```shell
+sudo apt install raindrop-public-rss-feed
+```
+
+### Manual installation from build artifacts
+
+Pre-built binaries for Linux and macOS on multiple architectures are attached to every [GitHub Release](https://github.com/cdzombak/raindrop-public-rss-feed/releases). Debian packages for each release are published as well.
+
+### Build and install locally
+
+```shell
+git clone https://github.com/cdzombak/raindrop-public-rss-feed.git
+cd raindrop-public-rss-feed
+make build
+
+cp out/raindrop-public-rss-feed $INSTALL_DIR
+```
+
+### Docker image
+
+Multi-architecture images are published to [Docker Hub](https://hub.docker.com/r/cdzombak/raindrop-public-rss-feed) and [GHCR](https://github.com/cdzombak/raindrop-public-rss-feed/pkgs/container/raindrop-public-rss-feed), built `FROM scratch` (just the binary plus CA certificates).
+
+The typical use is non-interactive feed generation, after authenticating once.
+Both mounts must be writable: the feed is written atomically into `/out`, and the
+state file is rewritten in place on each token refresh.
+
+```shell
+docker run --rm \
+  -v /home/cdzombak/.config/raindrop-public-rss-feed:/state \
+  -v /var/www/feeds:/out \
+  cdzombak/raindrop-public-rss-feed:1 \
+  -oauth-state /state/oauth.json \
+  -out-file /out/public.xml
+```
+
+You can also run the one-time `-login` in the container. It prints the
+authorization URL for you to open on your host, so no in-container browser is
+needed — but your browser's redirect must reach the callback server, which binds
+to the `-redirect-uri` host (`localhost:8080` by default). On Linux, use
+`--network host`:
+
+```shell
+docker run --rm -it --network host \
+  -e RAINDROP_CLIENT_ID -e RAINDROP_CLIENT_SECRET \
+  -v /home/cdzombak/.config/raindrop-public-rss-feed:/state \
+  cdzombak/raindrop-public-rss-feed:1 \
+  -oauth-state /state/oauth.json -login
+```
+
+Plain `-p 8080:8080` won't reach the container's loopback, so it won't work with
+the default redirect URI. Without host networking, authenticate on the host and
+mount the resulting state file.
 
 ## Setup
 
 1. Create an app at <https://app.raindrop.io/settings/integrations> to get a
-   **client ID** and **client secret**.
+   **client ID** and **client secret**, and set its **Redirect URI** to
+   `http://localhost:8080/oauth`.
 
-   In the app settings, set the **Redirect URI** to:
+   This must match the `-redirect-uri` flag **exactly** — the `-login` flow runs
+   a temporary local server at that address to receive the OAuth callback. To use
+   a different address, change both.
 
-   ```
-   http://localhost:8080/oauth
-   ```
-
-   This must match the program's `-redirect-uri` flag **exactly** — same scheme,
-   host, port, and path — because the `-login` flow starts a temporary local
-   server at that address to receive the OAuth callback. `http://localhost` is
-   accepted by Raindrop for this purpose. If you want a different address, set it
-   in both places (the Raindrop app settings and `-redirect-uri`). Raindrop
-   allows multiple redirect URIs per app, so you can register more than one.
-
-2. Authenticate once. The client credentials are read from the environment (or
-   `-client-id` / `-client-secret`) and stored in the state file:
+2. Authenticate once. Credentials are read from the environment (or
+   `-client-id` / `-client-secret`) and saved to the state file:
 
    ```sh
    export RAINDROP_CLIENT_ID=...
@@ -59,10 +121,12 @@ go run . -oauth-state .oauth.json -out-file public.xml
 go run . -oauth-state .oauth.json -out-file public.json -format json -n 50
 ```
 
-This is the form to put in cron. No environment variables are needed for
-non-interactive runs — the state file is self-sufficient.
+This is the form to put in cron: the state file is self-sufficient, so no
+environment variables are needed.
 
 ### Flags
+
+`-help` prints usage and exits; `-version` prints the version and exits.
 
 `-oauth-state` is always required:
 
@@ -90,3 +154,19 @@ Used when generating the feed (i.e. without `-login`):
 | `-out-file` | yes      | Path to write the output feed to. Written atomically. |
 | `-n`        | no       | Number of bookmarks to include (1–50; default 20).  |
 | `-format`   | no       | Feed format: `rss`, `atom`, or `json` (default `rss`). |
+
+## Building from source
+
+```sh
+make build          # build for the current platform to ./out
+make all            # cross-compile for macOS and Linux (amd64/arm64/armv7/armv6)
+make package        # build binaries + .deb packages (requires fpm)
+make test           # run the test suite
+```
+
+The build stamps the version (from `.version.sh`) into the binary, reported by
+`-version`. `go run .` and un-stamped builds report `<dev>`.
+
+## License
+
+GPL-3.0; see [LICENSE](LICENSE).
