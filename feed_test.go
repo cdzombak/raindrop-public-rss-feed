@@ -17,11 +17,13 @@ func sampleDrops() []rd.Raindrop {
 			Title:   "First Bookmark",
 			Link:    "https://example.com/1",
 			Excerpt: "Description of the first bookmark.",
+			Cover:   "https://example.com/1/cover.jpg",
 			Created: "2026-07-20T10:00:00Z",
 			Tags:    []string{"_public"},
 		},
 		{
 			// No title: should fall back to the link.
+			// No cover: the item should carry no image.
 			Title:   "",
 			Link:    "https://example.com/2",
 			Excerpt: "Description of the second bookmark.",
@@ -52,6 +54,12 @@ func TestBuildFeed(t *testing.T) {
 	if feed.Items[1].PublishedParsed == nil {
 		t.Errorf("fractional-second Created should parse")
 	}
+	if feed.Items[0].Image == nil || feed.Items[0].Image.URL != "https://example.com/1/cover.jpg" {
+		t.Errorf("cover should map to the item image, got %+v", feed.Items[0].Image)
+	}
+	if feed.Items[1].Image != nil {
+		t.Errorf("item without a cover should have no image, got %+v", feed.Items[1].Image)
+	}
 }
 
 func TestWriteFeedRSS(t *testing.T) {
@@ -66,6 +74,7 @@ func TestWriteFeedRSS(t *testing.T) {
 		"<link>https://example.com/1</link>",
 		`<guid isPermaLink="true">https://example.com/1</guid>`,
 		"<description>Description of the first bookmark.</description>",
+		`<enclosure url="https://example.com/1/cover.jpg"`, // cover image
 	} {
 		if !strings.Contains(s, want) {
 			t.Errorf("RSS output missing %q\n---\n%s", want, s)
@@ -83,6 +92,7 @@ func TestWriteFeedAtom(t *testing.T) {
 	for _, want := range []string{
 		"<id>https://example.com/1</id>", // GUID becomes the Atom entry id
 		"Description of the first bookmark.",
+		`href="https://example.com/1/cover.jpg" rel="enclosure"`, // cover image
 	} {
 		if !strings.Contains(s, want) {
 			t.Errorf("Atom output missing %q\n---\n%s", want, s)
@@ -102,6 +112,7 @@ func TestWriteFeedJSON(t *testing.T) {
 			URL         string `json:"url"`
 			Title       string `json:"title"`
 			ContentHTML string `json:"content_html"`
+			Image       string `json:"image"`
 		} `json:"items"`
 	}
 	if err := json.Unmarshal([]byte(readFile(t, out)), &doc); err != nil {
@@ -119,6 +130,12 @@ func TestWriteFeedJSON(t *testing.T) {
 	}
 	if it.ContentHTML != "Description of the first bookmark." {
 		t.Errorf("content_html = %q, want the description", it.ContentHTML)
+	}
+	if it.Image != "https://example.com/1/cover.jpg" {
+		t.Errorf("image = %q, want the cover URL", it.Image)
+	}
+	if doc.Items[1].Image != "" {
+		t.Errorf("item without a cover should have no image, got %q", doc.Items[1].Image)
 	}
 }
 

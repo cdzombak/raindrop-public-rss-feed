@@ -5,7 +5,8 @@ bookmarks tagged `_public`, across your entire account, and writes them out as a
 RSS, Atom, or JSON feed.
 
 Each feed item uses the bookmark's title, URL (as both the link and the GUID),
-and description (as the item content). The feed is written atomically to
+description (as the item content), and cover image, if any (as an RSS/Atom
+enclosure and JSON Feed item image). The feed is written atomically to
 `-out-file`, so a web server never serves a half-written feed.
 
 It authenticates via OAuth using

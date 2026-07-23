@@ -46,6 +46,12 @@ func buildFeed(drops []rd.Raindrop, now time.Time) *gofeed.Feed {
 			Content:     d.Excerpt,
 			Description: d.Excerpt,
 		}
+		// Cover is the bookmark's thumbnail; not every bookmark has one. The
+		// converters render Image as an RSS/Atom enclosure and as JSON Feed's
+		// item image.
+		if d.Cover != "" {
+			item.Image = &gofeed.Image{URL: d.Cover}
+		}
 		if created, err := time.Parse(time.RFC3339, d.Created); err == nil {
 			item.Published = d.Created
 			item.PublishedParsed = &created
