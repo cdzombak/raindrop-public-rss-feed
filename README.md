@@ -11,9 +11,7 @@ and description (as the item content). The feed is written atomically to
 It authenticates via OAuth using
 [cdzombak/raindrop-io-api-client](https://github.com/cdzombak/raindrop-io-api-client),
 and builds the feed with
-[cdzombak/gofeed](https://github.com/cdzombak/gofeed) (the `cdz/feed-creation`
-branch, which adds feed generation; wired in via a `replace` directive in
-`go.mod`).
+[cdzombak/gofeed](https://github.com/cdzombak/gofeed).
 You authenticate **once** interactively; after that the refresh token is stored
 and the program renews access tokens on its own, so it can run non-interactively
 (e.g. from cron).
@@ -75,21 +73,3 @@ non-interactive runs — the state file is self-sufficient.
 | `-client-id`     | no                  | App client ID for `-login` (defaults to `$RAINDROP_CLIENT_ID`).        |
 | `-client-secret` | no                  | App client secret for `-login` (defaults to `$RAINDROP_CLIENT_SECRET`).|
 | `-redirect-uri`  | no                  | OAuth redirect URI; must match your app settings. Default `http://localhost:8080/oauth`. |
-
-## The OAuth state file
-
-The file stores your client credentials and the current token set, so keep it
-private (it is written with `0600` permissions):
-
-```json
-{
-  "client_id": "...",
-  "client_secret": "...",
-  "access_token": "...",
-  "refresh_token": "...",
-  "token_type": "Bearer",
-  "expires_at": "2026-08-06T12:00:00Z"
-}
-```
-
-Running without `-login` when this file is missing or empty is an error.
