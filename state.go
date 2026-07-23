@@ -71,7 +71,10 @@ func saveState(path string, s OAuthState) error {
 		return err
 	}
 	b = append(b, '\n')
-	if err := os.WriteFile(path, b, 0o600); err != nil {
+	// Written atomically, and 0600 because the file holds a client secret and
+	// refresh token. A crash mid-write must not corrupt these: unlike the feed,
+	// they cannot be regenerated and a loss forces a manual -login.
+	if err := atomicWriteFile(path, b, 0o600); err != nil {
 		return fmt.Errorf("write oauth state: %w", err)
 	}
 	return nil

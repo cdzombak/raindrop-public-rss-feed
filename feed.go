@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"path/filepath"
 	"time"
 
 	rd "github.com/cdzombak/raindrop-io-api-client/pkg/raindrop"
@@ -122,30 +121,4 @@ func writeFeed(feed *gofeed.Feed, format, outFile string) error {
 		return err
 	}
 	return atomicWriteFile(outFile, buf.Bytes(), 0o644)
-}
-
-// atomicWriteFile writes data to a temp file in the destination directory, then
-// renames it over path.
-func atomicWriteFile(path string, data []byte, perm os.FileMode) error {
-	tmp, err := os.CreateTemp(filepath.Dir(path), ".feed-*.tmp")
-	if err != nil {
-		return fmt.Errorf("creating temp file: %w", err)
-	}
-	tmpName := tmp.Name()
-	defer func() { _ = os.Remove(tmpName) }() // no-op once renamed
-
-	if _, err := tmp.Write(data); err != nil {
-		_ = tmp.Close()
-		return fmt.Errorf("writing feed: %w", err)
-	}
-	if err := tmp.Close(); err != nil {
-		return fmt.Errorf("closing feed: %w", err)
-	}
-	if err := os.Chmod(tmpName, perm); err != nil {
-		return fmt.Errorf("setting feed permissions: %w", err)
-	}
-	if err := os.Rename(tmpName, path); err != nil {
-		return fmt.Errorf("moving feed into place: %w", err)
-	}
-	return nil
 }
