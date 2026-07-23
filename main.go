@@ -1,6 +1,8 @@
 // Command raindrop-public-rss-feed authenticates to Raindrop.io, finds the most
-// recently created bookmarks tagged "_public" across the whole account, and
-// writes them out as an RSS, Atom, or JSON feed.
+// recently created bookmarks carrying a configured tag ("_public" by default)
+// across the whole account, and writes them out as an RSS, Atom, or JSON feed.
+// The tag, item count, output format, and feed metadata are read from a YAML
+// file given with -config.
 //
 // Authentication uses OAuth via github.com/cdzombak/raindrop-io-api-client. You
 // authenticate once interactively with -login; the resulting refresh token (and
