@@ -127,10 +127,10 @@ func atomicWriteFile(path string, data []byte, perm os.FileMode) error {
 		return fmt.Errorf("creating temp file: %w", err)
 	}
 	tmpName := tmp.Name()
-	defer os.Remove(tmpName) // no-op once renamed
+	defer func() { _ = os.Remove(tmpName) }() // no-op once renamed
 
 	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
+		_ = tmp.Close()
 		return fmt.Errorf("writing feed: %w", err)
 	}
 	if err := tmp.Close(); err != nil {

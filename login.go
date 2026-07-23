@@ -58,11 +58,11 @@ func runLogin(cfg appConfig, logger *slog.Logger) error {
 		code, err := client.GetAuthorizationCode(r)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "<h1>Authorization failed</h1><p>%s</p>", err.Error())
+			_, _ = fmt.Fprintf(w, "<h1>Authorization failed</h1><p>%s</p>", err.Error())
 			trySend(srvErrCh, err)
 			return
 		}
-		fmt.Fprint(w, "<h1>Authorized</h1><p>You may close this tab and return to the terminal.</p>")
+		_, _ = fmt.Fprint(w, "<h1>Authorized</h1><p>You may close this tab and return to the terminal.</p>")
 		trySendStr(codeCh, code)
 	})
 
@@ -77,7 +77,7 @@ func runLogin(cfg appConfig, logger *slog.Logger) error {
 			trySend(srvErrCh, err)
 		}
 	}()
-	defer srv.Close()
+	defer func() { _ = srv.Close() }()
 
 	authURLObj, err := client.GetAuthorizationURL()
 	if err != nil {
