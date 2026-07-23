@@ -45,6 +45,8 @@ type appConfig struct {
 
 func main() {
 	var cfg appConfig
+	var showHelp bool
+	flag.BoolVar(&showHelp, "help", false, "Show this help and exit.")
 	flag.StringVar(&cfg.statePath, "oauth-state", "", "Path to the JSON file storing OAuth state (refresh token, app credentials). Required. Created by -login if missing.")
 	flag.BoolVar(&cfg.login, "login", false, "Run the interactive OAuth login flow and persist the result to the -oauth-state file.")
 	flag.StringVar(&cfg.clientID, "client-id", "", "Raindrop app client ID (login only; defaults to $RAINDROP_CLIENT_ID).")
@@ -54,6 +56,12 @@ func main() {
 	flag.StringVar(&cfg.format, "format", "rss", "Feed output format: rss, atom, or json.")
 	flag.StringVar(&cfg.outFile, "out-file", "", "Path to write the output feed to. Required unless -login is given.")
 	flag.Parse()
+
+	if showHelp {
+		flag.CommandLine.SetOutput(os.Stdout)
+		flag.Usage()
+		os.Exit(exitcode.Success)
+	}
 
 	if err := validateConfig(cfg); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
