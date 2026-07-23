@@ -1,7 +1,8 @@
 # raindrop-public-rss-feed
 
 A small Go program that finds your most recently created [Raindrop.io](https://raindrop.io)
-bookmarks tagged `_public` and writes them out as an RSS, Atom, or JSON feed.
+bookmarks tagged `_public` (or any tag you configure) and writes them out as an
+RSS, Atom, or JSON feed.
 
 Each item carries the bookmark's title, URL, description, and cover image (if
 any). The feed is written atomically, so a web server never serves a
@@ -57,8 +58,9 @@ cp out/raindrop-public-rss-feed $INSTALL_DIR
 Multi-architecture images are published to [Docker Hub](https://hub.docker.com/r/cdzombak/raindrop-public-rss-feed) and [GHCR](https://github.com/cdzombak/raindrop-public-rss-feed/pkgs/container/raindrop-public-rss-feed), built `FROM scratch` (just the binary plus CA certificates).
 
 The typical use is non-interactive feed generation, after authenticating once.
-Both mounts must be writable: the feed is written atomically into `/out`, and the
-state file is rewritten in place on each token refresh.
+Keep your [config file](#configuration) alongside the state file in the mounted
+directory. Both mounts must be writable: the feed is written atomically into
+`/out`, and the state file is rewritten in place on each token refresh.
 
 ```shell
 docker run --rm \
@@ -66,6 +68,7 @@ docker run --rm \
   -v /var/www/feeds:/out \
   cdzombak/raindrop-public-rss-feed:1 \
   -oauth-state /state/oauth.json \
+  -config /state/config.yml \
   -out-file /out/public.xml
 ```
 
@@ -109,30 +112,62 @@ mount the resulting state file.
    This opens Raindrop's authorization page in your browser and writes the
    resulting tokens to the state file.
 
-## Usage
+## Configuration
 
-Once authenticated, run without `-login` to generate the feed:
+The feed is described by a YAML file, passed with `-config` (required when
+generating; not needed for `-login`). A minimal example:
 
-```sh
-# 20 most recent, RSS (defaults):
-go run . -oauth-state .oauth.json -out-file public.xml
-
-# 50 most recent, JSON Feed:
-go run . -oauth-state .oauth.json -out-file public.json -format json -n 50
+```yaml
+tag: _public
+count: 20
+feed:
+  title: "Chris Dzombak • Public Bookmarks"
+  description: "Interesting links I've shared publicly."
+  link: "https://www.dzombak.com/"
+  feed_url: "https://www.dzombak.com/feeds/bookmarks.rss.xml"
+  author: "Chris Dzombak"
+  language: "en-US"
 ```
 
-This is the form to put in cron: the state file is self-sufficient, so no
-environment variables are needed.
+Every field is optional and falls back to a default. See
+[`config.example.yml`](config.example.yml) for the full, commented reference.
+
+| Key                | Default                     | Description                                          |
+| ------------------ | --------------------------- | ---------------------------------------------------- |
+| `tag`              | `_public`                   | Raindrop tag that marks a bookmark for the feed.     |
+| `count`            | `20`                        | Number of bookmarks to include (1–50).               |
+| `feed.title`       | `Raindrop Public Bookmarks` | Feed title.                                          |
+| `feed.description` | `Bookmarks tagged "<tag>"`  | Feed description / subtitle.                         |
+| `feed.link`        | `https://raindrop.io/`      | The website the feed represents (home page).         |
+| `feed.feed_url`    | —                           | Canonical URL of the feed itself (`rel="self"`). Rendered in Atom and JSON output only, not RSS. |
+| `feed.author`      | —                           | Feed author.                                         |
+| `feed.language`    | —                           | Feed language, as a BCP 47 code (e.g. `en-US`).      |
+
+Unknown keys are rejected, so a typo fails loudly instead of being ignored.
+
+## Usage
+
+Once authenticated, run with `-config` and `-out-file` to generate the feed:
+
+```sh
+# RSS (default format):
+go run . -oauth-state .oauth.json -config config.yml -out-file public.xml
+
+# JSON Feed:
+go run . -oauth-state .oauth.json -config config.yml -out-file public.json -format json
+```
+
+This is the form to put in cron: the state and config files are self-sufficient,
+so no environment variables are needed.
 
 ### Flags
 
 `-help` prints usage and exits; `-version` prints the version and exits.
 
-`-oauth-state` is always required:
-
-| Flag           | Required | Description                                                        |
-| -------------- | -------- | ----------------------------------------------------------------- |
-| `-oauth-state` | yes      | Path to the JSON OAuth state file. Created by `-login` if missing. |
+| Flag           | Required          | Description                                                        |
+| -------------- | ----------------- | ----------------------------------------------------------------- |
+| `-oauth-state` | yes               | Path to the JSON OAuth state file. Created by `-login` if missing. |
+| `-config`      | unless `-login`   | Path to the YAML [feed configuration](#configuration).            |
 
 #### Login flags (`-login`)
 
@@ -152,8 +187,10 @@ Used when generating the feed (i.e. without `-login`):
 | Flag        | Required | Description                                         |
 | ----------- | -------- | --------------------------------------------------- |
 | `-out-file` | yes      | Path to write the output feed to. Written atomically. |
-| `-n`        | no       | Number of bookmarks to include (1–50; default 20).  |
 | `-format`   | no       | Feed format: `rss`, `atom`, or `json` (default `rss`). |
+
+The tag, item count, and all feed metadata live in the
+[config file](#configuration).
 
 ## Building from source
 

@@ -1,0 +1,41 @@
+# Example configuration for raindrop-public-rss-feed.
+#
+# Pass this file with -config. Every field is optional; anything you omit falls
+# back to the default shown in the comment. Copy it, edit it, and point -config
+# at your copy.
+
+# The Raindrop tag that marks a bookmark for inclusion in the feed.
+# Default: _public
+tag: _public
+
+# How many bookmarks to include, most recently created first (1–50).
+# Default: 20
+count: 20
+
+# Channel-level metadata describing the feed itself.
+feed:
+  # The feed's title, shown by readers as its name.
+  # Default: Raindrop Public Bookmarks
+  title: "Chris Dzombak • Public Bookmarks"
+
+  # A short description / subtitle.
+  # Default: Bookmarks tagged "<tag>"
+  description: "Interesting links I've shared publicly."
+
+  # The website the feed represents (the channel <link> / home page).
+  # Default: https://raindrop.io/
+  link: "https://www.dzombak.com/"
+
+  # The canonical URL where this feed is published (the feed's self link).
+  # Rendered as rel="self" in Atom output and as feed_url in JSON Feed output.
+  # RSS output does not include a self link.
+  # Default: omitted
+  feed_url: "https://www.dzombak.com/feeds/bookmarks.rss.xml"
+
+  # Feed author.
+  # Default: omitted
+  author: "Chris Dzombak"
+
+  # Feed language as a BCP 47 code (e.g. en-US, fr, de).
+  # Default: omitted
+  language: "en-US"

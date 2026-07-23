@@ -19,13 +19,11 @@ import (
 )
 
 const (
-	// publicTag is the Raindrop tag that marks a bookmark as public.
-	publicTag = "_public"
+	// appName is the program name, used in the feed's generator field.
+	appName = "raindrop-public-rss-feed"
 	// maxBookmarks is the most bookmarks the feed can include (Raindrop's
 	// per-page maximum).
 	maxBookmarks = 50
-	// defaultBookmarks is the default number of bookmarks in the feed.
-	defaultBookmarks = 20
 )
 
 // version is the program version, injected at build time via
@@ -39,11 +37,11 @@ var validFormats = map[string]bool{"rss": true, "atom": true, "json": true}
 // appConfig holds the parsed command-line configuration.
 type appConfig struct {
 	statePath    string
+	configPath   string
 	login        bool
 	clientID     string
 	clientSecret string
 	redirectURI  string
-	n            int
 	format       string
 	outFile      string
 }
@@ -54,11 +52,11 @@ func main() {
 	flag.BoolVar(&showHelp, "help", false, "Show this help and exit.")
 	flag.BoolVar(&showVersion, "version", false, "Print the version and exit.")
 	flag.StringVar(&cfg.statePath, "oauth-state", "", "Path to the JSON file storing OAuth state (refresh token, app credentials). Required. Created by -login if missing.")
+	flag.StringVar(&cfg.configPath, "config", "", "Path to the YAML feed configuration file. Required unless -login is given. See config.example.yml.")
 	flag.BoolVar(&cfg.login, "login", false, "Run the interactive OAuth login flow and persist the result to the -oauth-state file.")
 	flag.StringVar(&cfg.clientID, "client-id", "", "Raindrop app client ID (login only; defaults to $RAINDROP_CLIENT_ID).")
 	flag.StringVar(&cfg.clientSecret, "client-secret", "", "Raindrop app client secret (login only; defaults to $RAINDROP_CLIENT_SECRET).")
 	flag.StringVar(&cfg.redirectURI, "redirect-uri", "http://localhost:8080/oauth", "OAuth redirect URI; must match your Raindrop app settings (login only).")
-	flag.IntVar(&cfg.n, "n", defaultBookmarks, "Number of bookmarks to include in the feed (max 50).")
 	flag.StringVar(&cfg.format, "format", "rss", "Feed output format: rss, atom, or json.")
 	flag.StringVar(&cfg.outFile, "out-file", "", "Path to write the output feed to. Required unless -login is given.")
 	flag.Parse()
@@ -94,11 +92,11 @@ func validateConfig(cfg appConfig) error {
 		return errors.New("-oauth-state is required")
 	}
 	if cfg.login {
-		// The feed flags don't apply to the login flow.
+		// The feed flags and config don't apply to the login flow.
 		return nil
 	}
-	if cfg.n < 1 || cfg.n > maxBookmarks {
-		return fmt.Errorf("-n must be between 1 and %d", maxBookmarks)
+	if cfg.configPath == "" {
+		return errors.New("-config is required unless -login is given")
 	}
 	if !validFormats[cfg.format] {
 		return fmt.Errorf("-format must be one of rss, atom, json (got %q)", cfg.format)
@@ -114,6 +112,11 @@ func run(cfg appConfig, logger *slog.Logger) error {
 		return runLogin(cfg, logger)
 	}
 
+	fc, err := loadConfig(cfg.configPath)
+	if err != nil {
+		return err
+	}
+
 	state, err := loadState(cfg.statePath)
 	if err != nil {
 		if errors.Is(err, errStateMissing) {
@@ -121,5 +124,5 @@ func run(cfg appConfig, logger *slog.Logger) error {
 		}
 		return err
 	}
-	return runSearch(cfg, state, logger)
+	return runSearch(cfg, fc, state, logger)
 }

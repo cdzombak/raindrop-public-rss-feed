@@ -11,6 +11,21 @@ import (
 	rd "github.com/cdzombak/raindrop-io-api-client/pkg/raindrop"
 )
 
+func sampleConfig() feedConfig {
+	return feedConfig{
+		Tag:   "_public",
+		Count: 20,
+		Feed: feedMeta{
+			Title:       "Test Feed",
+			Description: "A test feed.",
+			Link:        "https://example.com/",
+			FeedURL:     "https://example.com/feed.xml",
+			Author:      "Jane Doe",
+			Language:    "en-US",
+		},
+	}
+}
+
 func sampleDrops() []rd.Raindrop {
 	return []rd.Raindrop{
 		{
@@ -35,10 +50,22 @@ func sampleDrops() []rd.Raindrop {
 
 func TestBuildFeed(t *testing.T) {
 	now := time.Date(2026, 7, 23, 0, 0, 0, 0, time.UTC)
-	feed := buildFeed(sampleDrops(), now)
+	feed := buildFeed(sampleDrops(), sampleConfig(), now)
 
 	if len(feed.Items) != 2 {
 		t.Fatalf("got %d items, want 2", len(feed.Items))
+	}
+	// Channel metadata comes from the config.
+	if feed.Title != "Test Feed" || feed.Link != "https://example.com/" ||
+		feed.Description != "A test feed." || feed.FeedLink != "https://example.com/feed.xml" ||
+		feed.Language != "en-US" {
+		t.Errorf("channel metadata not taken from config: %+v", feed)
+	}
+	if len(feed.Authors) != 1 || feed.Authors[0].Name != "Jane Doe" {
+		t.Errorf("author not taken from config: %+v", feed.Authors)
+	}
+	if feed.Generator != appName+" "+version {
+		t.Errorf("generator = %q, want %q", feed.Generator, appName+" "+version)
 	}
 	if feed.Items[1].Title != "https://example.com/2" {
 		t.Errorf("missing-title item should fall back to link, got %q", feed.Items[1].Title)
@@ -64,7 +91,7 @@ func TestBuildFeed(t *testing.T) {
 
 func TestWriteFeedRSS(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "feed.xml")
-	if err := writeFeed(buildFeed(sampleDrops(), time.Now()), "rss", out); err != nil {
+	if err := writeFeed(buildFeed(sampleDrops(), sampleConfig(), time.Now()), "rss", out); err != nil {
 		t.Fatalf("writeFeed: %v", err)
 	}
 	s := readFile(t, out)
@@ -75,6 +102,8 @@ func TestWriteFeedRSS(t *testing.T) {
 		`<guid isPermaLink="true">https://example.com/1</guid>`,
 		"<description>Description of the first bookmark.</description>",
 		`<enclosure url="https://example.com/1/cover.jpg"`, // cover image
+		"<language>en-US</language>",                       // from config
+		"<managingEditor>Jane Doe</managingEditor>",        // author, from config
 	} {
 		if !strings.Contains(s, want) {
 			t.Errorf("RSS output missing %q\n---\n%s", want, s)
@@ -84,7 +113,7 @@ func TestWriteFeedRSS(t *testing.T) {
 
 func TestWriteFeedAtom(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "feed.atom")
-	if err := writeFeed(buildFeed(sampleDrops(), time.Now()), "atom", out); err != nil {
+	if err := writeFeed(buildFeed(sampleDrops(), sampleConfig(), time.Now()), "atom", out); err != nil {
 		t.Fatalf("writeFeed: %v", err)
 	}
 	s := readFile(t, out)
@@ -93,6 +122,8 @@ func TestWriteFeedAtom(t *testing.T) {
 		"<id>https://example.com/1</id>", // GUID becomes the Atom entry id
 		"Description of the first bookmark.",
 		`href="https://example.com/1/cover.jpg" rel="enclosure"`, // cover image
+		`href="https://example.com/feed.xml" rel="self"`,         // feed_url -> rel=self
+		"Jane Doe", // author name
 	} {
 		if !strings.Contains(s, want) {
 			t.Errorf("Atom output missing %q\n---\n%s", want, s)
@@ -102,12 +133,15 @@ func TestWriteFeedAtom(t *testing.T) {
 
 func TestWriteFeedJSON(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "feed.json")
-	if err := writeFeed(buildFeed(sampleDrops(), time.Now()), "json", out); err != nil {
+	if err := writeFeed(buildFeed(sampleDrops(), sampleConfig(), time.Now()), "json", out); err != nil {
 		t.Fatalf("writeFeed: %v", err)
 	}
 
 	var doc struct {
-		Items []struct {
+		Title       string `json:"title"`
+		HomePageURL string `json:"home_page_url"`
+		FeedURL     string `json:"feed_url"`
+		Items       []struct {
 			ID          string `json:"id"`
 			URL         string `json:"url"`
 			Title       string `json:"title"`
@@ -117,6 +151,11 @@ func TestWriteFeedJSON(t *testing.T) {
 	}
 	if err := json.Unmarshal([]byte(readFile(t, out)), &doc); err != nil {
 		t.Fatalf("output is not valid JSON: %v", err)
+	}
+	// Channel metadata from the config.
+	if doc.Title != "Test Feed" || doc.HomePageURL != "https://example.com/" ||
+		doc.FeedURL != "https://example.com/feed.xml" {
+		t.Errorf("JSON feed metadata = %q / %q / %q", doc.Title, doc.HomePageURL, doc.FeedURL)
 	}
 	if len(doc.Items) != 2 {
 		t.Fatalf("got %d items, want 2", len(doc.Items))

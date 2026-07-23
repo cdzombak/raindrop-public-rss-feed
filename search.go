@@ -25,9 +25,9 @@ const (
 	tokenExpiryBuffer = 60 * time.Second
 )
 
-// runSearch refreshes the access token if needed, finds the most recent public
-// bookmarks, and writes them out as a feed.
-func runSearch(cfg appConfig, state OAuthState, logger *slog.Logger) error {
+// runSearch refreshes the access token if needed, finds the most recent
+// bookmarks matching the configured tag, and writes them out as a feed.
+func runSearch(cfg appConfig, fc feedConfig, state OAuthState, logger *slog.Logger) error {
 	client, err := rd.NewClientWithLogger(state.ClientID, state.ClientSecret, "", logger)
 	if err != nil {
 		return err
@@ -40,12 +40,12 @@ func runSearch(cfg appConfig, state OAuthState, logger *slog.Logger) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	drops, err := searchTaggedRaindrops(ctx, accessToken, publicTag, cfg.n)
+	drops, err := searchTaggedRaindrops(ctx, accessToken, fc.Tag, fc.Count)
 	if err != nil {
 		return err
 	}
 
-	feed := buildFeed(drops, time.Now())
+	feed := buildFeed(drops, fc, time.Now())
 	if err := writeFeed(feed, cfg.format, cfg.outFile); err != nil {
 		return err
 	}

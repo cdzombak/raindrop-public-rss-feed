@@ -12,25 +12,32 @@ import (
 	"github.com/mmcdole/gofeed/rss"
 )
 
-const (
-	feedTitle       = "Raindrop Public Bookmarks"
-	feedLink        = "https://raindrop.io/"
-	feedDescription = `Bookmarks tagged "_public"`
-)
-
 // buildFeed constructs a universal gofeed.Feed from the given raindrops, which
-// are expected to be ordered newest-first.
+// are expected to be ordered newest-first. Channel-level metadata (title, link,
+// description, self URL, author, language) comes from the feed configuration.
 //
 // Each bookmark's description (Raindrop's "excerpt") is stored in both the
 // universal Content and Description fields: the RSS converter renders
 // Description as <description>, while the Atom and JSON converters render
 // Content as the entry content. Setting both makes every output format carry
 // the description.
-func buildFeed(drops []rd.Raindrop, now time.Time) *gofeed.Feed {
+func buildFeed(drops []rd.Raindrop, fc feedConfig, now time.Time) *gofeed.Feed {
 	feed := &gofeed.Feed{
-		Title:       feedTitle,
-		Link:        feedLink,
-		Description: feedDescription,
+		Title:       fc.Feed.Title,
+		Link:        fc.Feed.Link,
+		Description: fc.Feed.Description,
+		Generator:   fmt.Sprintf("%s %s", appName, version),
+	}
+	// FeedLink is rendered as rel="self" in Atom and as feed_url in JSON Feed.
+	// (The RSS converter has no self-link field, so RSS output omits it.)
+	if fc.Feed.FeedURL != "" {
+		feed.FeedLink = fc.Feed.FeedURL
+	}
+	if fc.Feed.Language != "" {
+		feed.Language = fc.Feed.Language
+	}
+	if fc.Feed.Author != "" {
+		feed.Authors = []*gofeed.Person{{Name: fc.Feed.Author}}
 	}
 
 	var newest time.Time

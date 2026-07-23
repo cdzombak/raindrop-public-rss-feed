@@ -6,6 +6,7 @@ require (
 	github.com/cdzombak/exitcode_go v0.0.2
 	github.com/cdzombak/raindrop-io-api-client v0.0.0-20260723153356-5b5fcb11eaea
 	github.com/mmcdole/gofeed v1.3.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
