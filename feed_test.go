@@ -13,8 +13,9 @@ import (
 
 func sampleConfig() feedConfig {
 	return feedConfig{
-		Tag:   "_public",
-		Count: 20,
+		Tag:    "_public",
+		Count:  20,
+		Format: "rss",
 		Feed: feedMeta{
 			Title:       "Test Feed",
 			Description: "A test feed.",

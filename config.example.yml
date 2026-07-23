@@ -12,6 +12,10 @@ tag: _public
 # Default: 20
 count: 20
 
+# Output feed format: rss, atom, or json.
+# Default: rss
+format: rss
+
 # Channel-level metadata describing the feed itself.
 feed:
   # The feed's title, shown by readers as its name.

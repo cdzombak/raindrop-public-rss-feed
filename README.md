@@ -120,6 +120,7 @@ generating; not needed for `-login`). A minimal example:
 ```yaml
 tag: _public
 count: 20
+format: rss
 feed:
   title: "Chris Dzombak • Public Bookmarks"
   description: "Interesting links I've shared publicly."
@@ -136,6 +137,7 @@ Every field is optional and falls back to a default. See
 | ------------------ | --------------------------- | ---------------------------------------------------- |
 | `tag`              | `_public`                   | Raindrop tag that marks a bookmark for the feed.     |
 | `count`            | `20`                        | Number of bookmarks to include (1–50).               |
+| `format`           | `rss`                       | Output feed format: `rss`, `atom`, or `json`.        |
 | `feed.title`       | `Raindrop Public Bookmarks` | Feed title.                                          |
 | `feed.description` | `Bookmarks tagged "<tag>"`  | Feed description / subtitle.                         |
 | `feed.link`        | `https://raindrop.io/`      | The website the feed represents (home page).         |
@@ -147,14 +149,11 @@ Unknown keys are rejected, so a typo fails loudly instead of being ignored.
 
 ## Usage
 
-Once authenticated, run with `-config` and `-out-file` to generate the feed:
+Once authenticated, run with `-config` and `-out-file` to generate the feed. The
+format is set in the config file:
 
 ```sh
-# RSS (default format):
 go run . -oauth-state .oauth.json -config config.yml -out-file public.xml
-
-# JSON Feed:
-go run . -oauth-state .oauth.json -config config.yml -out-file public.json -format json
 ```
 
 This is the form to put in cron: the state and config files are self-sufficient,
@@ -187,9 +186,8 @@ Used when generating the feed (i.e. without `-login`):
 | Flag        | Required | Description                                         |
 | ----------- | -------- | --------------------------------------------------- |
 | `-out-file` | yes      | Path to write the output feed to. Written atomically. |
-| `-format`   | no       | Feed format: `rss`, `atom`, or `json` (default `rss`). |
 
-The tag, item count, and all feed metadata live in the
+The tag, item count, output format, and all feed metadata live in the
 [config file](#configuration).
 
 ## Building from source

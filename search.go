@@ -46,10 +46,10 @@ func runSearch(cfg appConfig, fc feedConfig, state OAuthState, logger *slog.Logg
 	}
 
 	feed := buildFeed(drops, fc, time.Now())
-	if err := writeFeed(feed, cfg.format, cfg.outFile); err != nil {
+	if err := writeFeed(feed, fc.Format, cfg.outFile); err != nil {
 		return err
 	}
-	fmt.Fprintf(os.Stderr, "Wrote %d item(s) as %s to %s\n", len(feed.Items), cfg.format, cfg.outFile)
+	fmt.Fprintf(os.Stderr, "Wrote %d item(s) as %s to %s\n", len(feed.Items), fc.Format, cfg.outFile)
 	return nil
 }
 

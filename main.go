@@ -42,7 +42,6 @@ type appConfig struct {
 	clientID     string
 	clientSecret string
 	redirectURI  string
-	format       string
 	outFile      string
 }
 
@@ -57,7 +56,6 @@ func main() {
 	flag.StringVar(&cfg.clientID, "client-id", "", "Raindrop app client ID (login only; defaults to $RAINDROP_CLIENT_ID).")
 	flag.StringVar(&cfg.clientSecret, "client-secret", "", "Raindrop app client secret (login only; defaults to $RAINDROP_CLIENT_SECRET).")
 	flag.StringVar(&cfg.redirectURI, "redirect-uri", "http://localhost:8080/oauth", "OAuth redirect URI; must match your Raindrop app settings (login only).")
-	flag.StringVar(&cfg.format, "format", "rss", "Feed output format: rss, atom, or json.")
 	flag.StringVar(&cfg.outFile, "out-file", "", "Path to write the output feed to. Required unless -login is given.")
 	flag.Parse()
 
@@ -97,9 +95,6 @@ func validateConfig(cfg appConfig) error {
 	}
 	if cfg.configPath == "" {
 		return errors.New("-config is required unless -login is given")
-	}
-	if !validFormats[cfg.format] {
-		return fmt.Errorf("-format must be one of rss, atom, json (got %q)", cfg.format)
 	}
 	if cfg.outFile == "" {
 		return errors.New("-out-file is required unless -login is given")

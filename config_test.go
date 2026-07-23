@@ -20,6 +20,7 @@ func TestLoadConfigFull(t *testing.T) {
 	path := writeConfig(t, `
 tag: blog
 count: 30
+format: atom
 feed:
   title: My Links
   description: Stuff I liked
@@ -32,8 +33,8 @@ feed:
 	if err != nil {
 		t.Fatalf("loadConfig: %v", err)
 	}
-	if cfg.Tag != "blog" || cfg.Count != 30 {
-		t.Errorf("tag/count = %q/%d", cfg.Tag, cfg.Count)
+	if cfg.Tag != "blog" || cfg.Count != 30 || cfg.Format != "atom" {
+		t.Errorf("tag/count/format = %q/%d/%q", cfg.Tag, cfg.Count, cfg.Format)
 	}
 	if cfg.Feed.Title != "My Links" || cfg.Feed.FeedURL != "https://example.com/feed.xml" ||
 		cfg.Feed.Author != "Jane Doe" || cfg.Feed.Language != "en-US" {
@@ -53,6 +54,9 @@ func TestLoadConfigDefaults(t *testing.T) {
 	}
 	if cfg.Count != defaultCount {
 		t.Errorf("count = %d, want default %d", cfg.Count, defaultCount)
+	}
+	if cfg.Format != defaultFormat {
+		t.Errorf("format = %q, want default %q", cfg.Format, defaultFormat)
 	}
 	if cfg.Feed.Link != defaultFeedLink {
 		t.Errorf("link = %q, want default %q", cfg.Feed.Link, defaultFeedLink)
@@ -74,6 +78,13 @@ func TestLoadConfigBadCount(t *testing.T) {
 	path := writeConfig(t, "count: 99\n")
 	if _, err := loadConfig(path); err == nil {
 		t.Fatal("expected an error for out-of-range count, got nil")
+	}
+}
+
+func TestLoadConfigBadFormat(t *testing.T) {
+	path := writeConfig(t, "format: xml\n")
+	if _, err := loadConfig(path); err == nil {
+		t.Fatal("expected an error for an invalid format, got nil")
 	}
 }
 

@@ -14,17 +14,20 @@ const (
 	defaultTag = "_public"
 	// defaultCount is the number of bookmarks included when the config omits one.
 	defaultCount = 20
+	// defaultFormat is the feed format used when the config omits one.
+	defaultFormat = "rss"
 	// defaultFeedTitle and defaultFeedLink are fallbacks for an unconfigured feed.
 	defaultFeedTitle = "Raindrop Public Bookmarks"
 	defaultFeedLink  = "https://raindrop.io/"
 )
 
-// feedConfig is the parsed -config YAML: which bookmarks to select and how to
-// describe the resulting feed.
+// feedConfig is the parsed -config YAML: which bookmarks to select, the output
+// format, and how to describe the resulting feed.
 type feedConfig struct {
-	Tag   string   `yaml:"tag"`
-	Count int      `yaml:"count"`
-	Feed  feedMeta `yaml:"feed"`
+	Tag    string   `yaml:"tag"`
+	Count  int      `yaml:"count"`
+	Format string   `yaml:"format"`
+	Feed   feedMeta `yaml:"feed"`
 }
 
 // feedMeta is the channel-level metadata written into the output feed.
@@ -69,6 +72,12 @@ func applyConfigDefaults(cfg feedConfig, path string) (feedConfig, error) {
 	}
 	if cfg.Count < 1 || cfg.Count > maxBookmarks {
 		return feedConfig{}, fmt.Errorf("config %q: count must be between 1 and %d", path, maxBookmarks)
+	}
+	if cfg.Format == "" {
+		cfg.Format = defaultFormat
+	}
+	if !validFormats[cfg.Format] {
+		return feedConfig{}, fmt.Errorf("config %q: format must be one of rss, atom, json (got %q)", path, cfg.Format)
 	}
 	if cfg.Feed.Title == "" {
 		cfg.Feed.Title = defaultFeedTitle
