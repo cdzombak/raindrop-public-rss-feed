@@ -34,8 +34,8 @@ var version = "<dev>"
 // validFormats is the set of accepted -format values.
 var validFormats = map[string]bool{"rss": true, "atom": true, "json": true}
 
-// appConfig holds the parsed command-line configuration.
-type appConfig struct {
+// cliArgs holds the parsed command-line configuration.
+type cliArgs struct {
 	statePath    string
 	configPath   string
 	login        bool
@@ -46,17 +46,17 @@ type appConfig struct {
 }
 
 func main() {
-	var cfg appConfig
+	var args cliArgs
 	var showHelp, showVersion bool
 	flag.BoolVar(&showHelp, "help", false, "Show this help and exit.")
 	flag.BoolVar(&showVersion, "version", false, "Print the version and exit.")
-	flag.StringVar(&cfg.statePath, "oauth-state", "", "Path to the JSON file storing OAuth state (refresh token, app credentials). Required. Created by -login if missing.")
-	flag.StringVar(&cfg.configPath, "config", "", "Path to the YAML feed configuration file. Required unless -login is given. See config.example.yml.")
-	flag.BoolVar(&cfg.login, "login", false, "Run the interactive OAuth login flow and persist the result to the -oauth-state file.")
-	flag.StringVar(&cfg.clientID, "client-id", "", "Raindrop app client ID (login only; defaults to $RAINDROP_CLIENT_ID).")
-	flag.StringVar(&cfg.clientSecret, "client-secret", "", "Raindrop app client secret (login only; defaults to $RAINDROP_CLIENT_SECRET).")
-	flag.StringVar(&cfg.redirectURI, "redirect-uri", "http://localhost:8080/oauth", "OAuth redirect URI; must match your Raindrop app settings (login only).")
-	flag.StringVar(&cfg.outFile, "out-file", "", "Path to write the output feed to. Required unless -login is given.")
+	flag.StringVar(&args.statePath, "oauth-state", "", "Path to the JSON file storing OAuth state (refresh token, app credentials). Required. Created by -login if missing.")
+	flag.StringVar(&args.configPath, "config", "", "Path to the YAML feed configuration file. Required unless -login is given. See config.example.yml.")
+	flag.BoolVar(&args.login, "login", false, "Run the interactive OAuth login flow and persist the result to the -oauth-state file.")
+	flag.StringVar(&args.clientID, "client-id", "", "Raindrop app client ID (login only; defaults to $RAINDROP_CLIENT_ID).")
+	flag.StringVar(&args.clientSecret, "client-secret", "", "Raindrop app client secret (login only; defaults to $RAINDROP_CLIENT_SECRET).")
+	flag.StringVar(&args.redirectURI, "redirect-uri", "http://localhost:8080/oauth", "OAuth redirect URI; must match your Raindrop app settings (login only).")
+	flag.StringVar(&args.outFile, "out-file", "", "Path to write the output feed to. Required unless -login is given.")
 	flag.Parse()
 
 	if showVersion {
@@ -70,7 +70,7 @@ func main() {
 		os.Exit(exitcode.Success)
 	}
 
-	if err := validateConfig(cfg); err != nil {
+	if err := validateConfig(args); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		flag.Usage()
 		os.Exit(exitcode.InvalidArgument)
@@ -78,46 +78,46 @@ func main() {
 
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelWarn}))
 
-	if err := run(cfg, logger); err != nil {
+	if err := run(args, logger); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(exitcode.Failure)
 	}
 }
 
 // validateConfig checks the argument combination. Errors here are usage errors.
-func validateConfig(cfg appConfig) error {
-	if cfg.statePath == "" {
+func validateConfig(args cliArgs) error {
+	if args.statePath == "" {
 		return errors.New("-oauth-state is required")
 	}
-	if cfg.login {
+	if args.login {
 		// The feed flags and config don't apply to the login flow.
 		return nil
 	}
-	if cfg.configPath == "" {
+	if args.configPath == "" {
 		return errors.New("-config is required unless -login is given")
 	}
-	if cfg.outFile == "" {
+	if args.outFile == "" {
 		return errors.New("-out-file is required unless -login is given")
 	}
 	return nil
 }
 
-func run(cfg appConfig, logger *slog.Logger) error {
-	if cfg.login {
-		return runLogin(cfg, logger)
+func run(args cliArgs, logger *slog.Logger) error {
+	if args.login {
+		return runLogin(args, logger)
 	}
 
-	fc, err := loadConfig(cfg.configPath)
+	fc, err := loadConfig(args.configPath)
 	if err != nil {
 		return err
 	}
 
-	state, err := loadState(cfg.statePath)
+	state, err := loadState(args.statePath)
 	if err != nil {
 		if errors.Is(err, errStateMissing) {
-			return fmt.Errorf("OAuth state file %q is missing or empty; run once with -login to authenticate", cfg.statePath)
+			return fmt.Errorf("OAuth state file %q is missing or empty; run once with -login to authenticate", args.statePath)
 		}
 		return err
 	}
-	return runSearch(cfg, fc, state, logger)
+	return runSearch(args, fc, state, logger)
 }

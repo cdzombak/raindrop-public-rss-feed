@@ -27,13 +27,13 @@ const (
 
 // runSearch refreshes the access token if needed, finds the most recent
 // bookmarks matching the configured tag, and writes them out as a feed.
-func runSearch(cfg appConfig, fc feedConfig, state OAuthState, logger *slog.Logger) error {
+func runSearch(args cliArgs, fc feedConfig, state OAuthState, logger *slog.Logger) error {
 	client, err := rd.NewClientWithLogger(state.ClientID, state.ClientSecret, "", logger)
 	if err != nil {
 		return err
 	}
 
-	accessToken, err := ensureAccessToken(client, cfg.statePath, &state)
+	accessToken, err := ensureAccessToken(client, args.statePath, &state)
 	if err != nil {
 		return err
 	}
@@ -46,10 +46,10 @@ func runSearch(cfg appConfig, fc feedConfig, state OAuthState, logger *slog.Logg
 	}
 
 	feed := buildFeed(drops, fc, time.Now())
-	if err := writeFeed(feed, fc.Format, cfg.outFile); err != nil {
+	if err := writeFeed(feed, fc.Format, args.outFile); err != nil {
 		return err
 	}
-	dest := cfg.outFile
+	dest := args.outFile
 	if dest == "-" {
 		dest = "stdout"
 	}

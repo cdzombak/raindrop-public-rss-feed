@@ -40,9 +40,9 @@ func callbackListenAddr(redirect *url.URL) string {
 // runLogin performs the interactive OAuth flow: it stands up a local HTTP server
 // for the redirect callback, directs the user to Raindrop's authorize page,
 // exchanges the returned code for tokens, and persists everything to statePath.
-func runLogin(cfg appConfig, logger *slog.Logger) error {
-	statePath := cfg.statePath
-	redirectURI := cfg.redirectURI
+func runLogin(args cliArgs, logger *slog.Logger) error {
+	statePath := args.statePath
+	redirectURI := args.redirectURI
 
 	// Reuse app credentials already stored in the state file so that re-login
 	// doesn't require re-supplying them.
@@ -50,8 +50,8 @@ func runLogin(cfg appConfig, logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-	clientID := firstNonEmpty(cfg.clientID, os.Getenv("RAINDROP_CLIENT_ID"), existing.ClientID)
-	clientSecret := firstNonEmpty(cfg.clientSecret, os.Getenv("RAINDROP_CLIENT_SECRET"), existing.ClientSecret)
+	clientID := firstNonEmpty(args.clientID, os.Getenv("RAINDROP_CLIENT_ID"), existing.ClientID)
+	clientSecret := firstNonEmpty(args.clientSecret, os.Getenv("RAINDROP_CLIENT_SECRET"), existing.ClientSecret)
 	if clientID == "" || clientSecret == "" {
 		return fmt.Errorf("client ID and secret are required for -login; set -client-id/-client-secret or $RAINDROP_CLIENT_ID/$RAINDROP_CLIENT_SECRET")
 	}
