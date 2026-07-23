@@ -1,0 +1,6 @@
+-s dir
+--name raindrop-public-rss-feed
+--description "Generate a public RSS, Atom, or JSON feed from your Raindrop.io bookmarks tagged _public"
+--url "https://github.com/cdzombak/raindrop-public-rss-feed"
+--maintainer "Chris Dzombak <https://www.dzombak.com>"
+--license GPL-3.0

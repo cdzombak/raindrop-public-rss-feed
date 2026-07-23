@@ -6,6 +6,7 @@
 *.so
 *.dylib
 /dist/
+/out/
 
 # Test binaries and coverage
 *.test
