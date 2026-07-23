@@ -49,7 +49,11 @@ func runSearch(cfg appConfig, fc feedConfig, state OAuthState, logger *slog.Logg
 	if err := writeFeed(feed, fc.Format, cfg.outFile); err != nil {
 		return err
 	}
-	fmt.Fprintf(os.Stderr, "Wrote %d item(s) as %s to %s\n", len(feed.Items), fc.Format, cfg.outFile)
+	dest := cfg.outFile
+	if dest == "-" {
+		dest = "stdout"
+	}
+	fmt.Fprintf(os.Stderr, "Wrote %d item(s) as %s to %s\n", len(feed.Items), fc.Format, dest)
 	return nil
 }
 

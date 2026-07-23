@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -176,6 +177,33 @@ func TestWriteFeedJSON(t *testing.T) {
 	}
 	if doc.Items[1].Image != "" {
 		t.Errorf("item without a cover should have no image, got %q", doc.Items[1].Image)
+	}
+}
+
+func TestWriteFeedStdout(t *testing.T) {
+	orig := os.Stdout
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	os.Stdout = w
+	defer func() { os.Stdout = orig }()
+
+	writeErr := writeFeed(buildFeed(sampleDrops(), sampleConfig(), time.Now()), "rss", "-")
+	if err := w.Close(); err != nil {
+		t.Fatal(err)
+	}
+	os.Stdout = orig
+
+	if writeErr != nil {
+		t.Fatalf("writeFeed: %v", writeErr)
+	}
+	out, err := io.ReadAll(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(out), "<rss") || !strings.Contains(string(out), "First Bookmark") {
+		t.Errorf("stdout output doesn't look like the RSS feed:\n%s", out)
 	}
 }
 

@@ -185,7 +185,7 @@ Used when generating the feed (i.e. without `-login`):
 
 | Flag        | Required | Description                                         |
 | ----------- | -------- | --------------------------------------------------- |
-| `-out-file` | yes      | Path to write the output feed to. Written atomically. |
+| `-out-file` | yes      | Path to write the output feed to (written atomically), or `-` for stdout. |
 
 The tag, item count, output format, and all feed metadata live in the
 [config file](#configuration).

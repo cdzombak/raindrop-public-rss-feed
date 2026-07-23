@@ -98,8 +98,9 @@ func (c *permalinkRSSConverter) Convert(f *gofeed.Feed) (*rss.Feed, error) {
 	return rssFeed, nil
 }
 
-// writeFeed renders the feed in the requested format and writes it atomically to
-// outFile, so a reader (or web server) never observes a partially written feed.
+// writeFeed renders the feed in the requested format and writes it to outFile.
+// A regular path is written atomically, so a reader (or web server) never
+// observes a partially written feed; the special path "-" writes to stdout.
 func writeFeed(feed *gofeed.Feed, format, outFile string) error {
 	var buf bytes.Buffer
 	var err error
@@ -115,6 +116,10 @@ func writeFeed(feed *gofeed.Feed, format, outFile string) error {
 	}
 	if err != nil {
 		return fmt.Errorf("rendering %s feed: %w", format, err)
+	}
+	if outFile == "-" {
+		_, err := os.Stdout.Write(buf.Bytes())
+		return err
 	}
 	return atomicWriteFile(outFile, buf.Bytes(), 0o644)
 }
