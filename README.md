@@ -167,6 +167,7 @@ so no environment variables are needed.
 | -------------- | ----------------- | ----------------------------------------------------------------- |
 | `-oauth-state` | yes               | Path to the JSON OAuth state file. Created by `-login` if missing. |
 | `-config`      | unless `-login`   | Path to the YAML [feed configuration](#configuration).            |
+| `-verbose`     | no                | Enable verbose (debug) logging to stderr.                         |
 
 #### Login flags (`-login`)
 

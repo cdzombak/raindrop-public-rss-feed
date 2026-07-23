@@ -45,6 +45,7 @@ type cliArgs struct {
 	clientSecret string
 	redirectURI  string
 	outFile      string
+	verbose      bool
 }
 
 func main() {
@@ -59,6 +60,7 @@ func main() {
 	flag.StringVar(&args.clientSecret, "client-secret", "", "Raindrop app client secret (login only; defaults to $RAINDROP_CLIENT_SECRET).")
 	flag.StringVar(&args.redirectURI, "redirect-uri", "http://localhost:8080/oauth", "OAuth redirect URI; must match your Raindrop app settings (login only).")
 	flag.StringVar(&args.outFile, "out-file", "", "Path to write the output feed to. Required unless -login is given.")
+	flag.BoolVar(&args.verbose, "verbose", false, "Enable verbose (debug) logging to stderr.")
 	flag.Parse()
 
 	if showVersion {
@@ -78,7 +80,11 @@ func main() {
 		os.Exit(exitcode.InvalidArgument)
 	}
 
-	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	logLevel := slog.LevelWarn
+	if args.verbose {
+		logLevel = slog.LevelDebug
+	}
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel}))
 
 	if err := run(args, logger); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
