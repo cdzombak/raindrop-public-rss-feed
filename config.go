@@ -21,6 +21,9 @@ const (
 	defaultFeedLink  = "https://raindrop.io/"
 )
 
+// validFormats is the set of accepted values for the config's `format` field.
+var validFormats = map[string]bool{"rss": true, "atom": true, "json": true}
+
 // feedConfig is the parsed -config YAML: which bookmarks to select, the output
 // format, and how to describe the resulting feed.
 type feedConfig struct {

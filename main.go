@@ -33,9 +33,6 @@ const (
 // and un-stamped builds.
 var version = "<dev>"
 
-// validFormats is the set of accepted -format values.
-var validFormats = map[string]bool{"rss": true, "atom": true, "json": true}
-
 // cliArgs holds the parsed command-line configuration.
 type cliArgs struct {
 	statePath    string
