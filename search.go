@@ -103,6 +103,7 @@ func searchTaggedRaindrops(ctx context.Context, accessToken, tag string, limit i
 		return nil, err
 	}
 	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("User-Agent", appName+"/"+version)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
