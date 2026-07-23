@@ -28,6 +28,11 @@ const (
 	defaultBookmarks = 20
 )
 
+// version is the program version, injected at build time via
+// -ldflags="-X main.version=...". It defaults to a placeholder for `go run`
+// and un-stamped builds.
+var version = "<dev>"
+
 // validFormats is the set of accepted -format values.
 var validFormats = map[string]bool{"rss": true, "atom": true, "json": true}
 
@@ -45,8 +50,9 @@ type appConfig struct {
 
 func main() {
 	var cfg appConfig
-	var showHelp bool
+	var showHelp, showVersion bool
 	flag.BoolVar(&showHelp, "help", false, "Show this help and exit.")
+	flag.BoolVar(&showVersion, "version", false, "Print the version and exit.")
 	flag.StringVar(&cfg.statePath, "oauth-state", "", "Path to the JSON file storing OAuth state (refresh token, app credentials). Required. Created by -login if missing.")
 	flag.BoolVar(&cfg.login, "login", false, "Run the interactive OAuth login flow and persist the result to the -oauth-state file.")
 	flag.StringVar(&cfg.clientID, "client-id", "", "Raindrop app client ID (login only; defaults to $RAINDROP_CLIENT_ID).")
@@ -56,6 +62,11 @@ func main() {
 	flag.StringVar(&cfg.format, "format", "rss", "Feed output format: rss, atom, or json.")
 	flag.StringVar(&cfg.outFile, "out-file", "", "Path to write the output feed to. Required unless -login is given.")
 	flag.Parse()
+
+	if showVersion {
+		fmt.Println(version)
+		os.Exit(exitcode.Success)
+	}
 
 	if showHelp {
 		flag.CommandLine.SetOutput(os.Stdout)
