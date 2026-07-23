@@ -33,7 +33,7 @@ type OAuthState struct {
 func loadState(path string) (OAuthState, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			return OAuthState{}, errStateMissing
 		}
 		return OAuthState{}, fmt.Errorf("read oauth state: %w", err)

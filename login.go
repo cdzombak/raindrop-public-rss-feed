@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -93,7 +94,7 @@ func runLogin(args cliArgs, logger *slog.Logger) error {
 	}
 	srv := &http.Server{Handler: mux}
 	go func() {
-		if err := srv.Serve(ln); err != nil && err != http.ErrServerClosed {
+		if err := srv.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			trySend(srvErrCh, err)
 		}
 	}()
