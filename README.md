@@ -106,7 +106,7 @@ is forwarded into the container. (On Linux you can instead use `--network host`.
    ```sh
    export RAINDROP_CLIENT_ID=...
    export RAINDROP_CLIENT_SECRET=...
-   go run . -oauth-state .oauth.json -login
+   raindrop-public-rss-feed -oauth-state .oauth.json -login
    ```
 
    This opens Raindrop's authorization page in your browser and writes the
@@ -153,7 +153,7 @@ Once authenticated, run with `-config` and `-out-file` to generate the feed. The
 format is set in the config file:
 
 ```sh
-go run . -oauth-state .oauth.json -config config.yml -out-file public.xml
+raindrop-public-rss-feed -oauth-state .oauth.json -config config.yml -out-file public.xml
 ```
 
 This is the form to put in cron: the state and config files are self-sufficient,
