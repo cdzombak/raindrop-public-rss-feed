@@ -1,6 +1,6 @@
 module github.com/cdzombak/raindrop-public-rss-feed
 
-go 1.26.4
+go 1.26
 
 require (
 	github.com/cdzombak/exitcode_go v0.0.2
