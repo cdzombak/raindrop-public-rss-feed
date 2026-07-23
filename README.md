@@ -63,13 +63,29 @@ non-interactive runs — the state file is self-sufficient.
 
 ### Flags
 
-| Flag             | Required            | Description                                                            |
-| ---------------- | ------------------- | ---------------------------------------------------------------------- |
-| `-oauth-state`   | yes                 | Path to the JSON OAuth state file. Created by `-login` if missing.     |
-| `-out-file`      | yes (unless `-login`) | Path to write the output feed to. Written atomically.               |
-| `-n`             | no                  | Number of bookmarks to include (1–50; default 20).                    |
-| `-format`        | no                  | Feed format: `rss`, `atom`, or `json` (default `rss`).                |
-| `-login`         | no                  | Run the interactive OAuth login flow and persist the result.          |
-| `-client-id`     | no                  | App client ID for `-login` (defaults to `$RAINDROP_CLIENT_ID`).        |
-| `-client-secret` | no                  | App client secret for `-login` (defaults to `$RAINDROP_CLIENT_SECRET`).|
-| `-redirect-uri`  | no                  | OAuth redirect URI; must match your app settings. Default `http://localhost:8080/oauth`. |
+`-oauth-state` is always required:
+
+| Flag           | Required | Description                                                        |
+| -------------- | -------- | ----------------------------------------------------------------- |
+| `-oauth-state` | yes      | Path to the JSON OAuth state file. Created by `-login` if missing. |
+
+#### Login flags (`-login`)
+
+Used only when authenticating with `-login`:
+
+| Flag             | Required | Description                                                              |
+| ---------------- | -------- | ------------------------------------------------------------------------ |
+| `-login`         | no       | Run the interactive OAuth login flow and persist the result.             |
+| `-client-id`     | no       | App client ID for `-login` (defaults to `$RAINDROP_CLIENT_ID`).          |
+| `-client-secret` | no       | App client secret for `-login` (defaults to `$RAINDROP_CLIENT_SECRET`).  |
+| `-redirect-uri`  | no       | OAuth redirect URI; must match your app settings. Default `http://localhost:8080/oauth`. |
+
+#### Generate flags
+
+Used when generating the feed (i.e. without `-login`):
+
+| Flag        | Required | Description                                         |
+| ----------- | -------- | --------------------------------------------------- |
+| `-out-file` | yes      | Path to write the output feed to. Written atomically. |
+| `-n`        | no       | Number of bookmarks to include (1–50; default 20).  |
+| `-format`   | no       | Feed format: `rss`, `atom`, or `json` (default `rss`). |
