@@ -25,6 +25,13 @@ const (
 	tokenExpiryBuffer = 60 * time.Second
 )
 
+// searchCriterion is one clause of Raindrop's `search` query parameter, which is
+// a JSON array of {key, val} objects.
+type searchCriterion struct {
+	Key string `json:"key"`
+	Val string `json:"val"`
+}
+
 // runSearch refreshes the access token if needed, finds the most recent
 // bookmarks matching the configured tag, and writes them out as a feed.
 func runSearch(args cliArgs, fc feedConfig, state OAuthState, logger *slog.Logger) error {
@@ -95,8 +102,15 @@ func searchTaggedRaindrops(ctx context.Context, accessToken, tag string, limit i
 	if err != nil {
 		return nil, err
 	}
+	// Build the search parameter as real JSON. Marshalling (rather than string
+	// formatting) guarantees the tag is escaped correctly even if it contains
+	// characters that would otherwise produce invalid JSON.
+	searchJSON, err := json.Marshal([]searchCriterion{{Key: "tag", Val: tag}})
+	if err != nil {
+		return nil, fmt.Errorf("building search query: %w", err)
+	}
 	q := url.Values{}
-	q.Set("search", fmt.Sprintf(`[{"key":"tag","val":%q}]`, tag))
+	q.Set("search", string(searchJSON))
 	q.Set("sort", "-created")
 	q.Set("perpage", strconv.Itoa(limit))
 	q.Set("page", "0")
